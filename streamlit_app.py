@@ -18,7 +18,7 @@ READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
 st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
-st.write("**Autores:**")
+st.write("**Autores: Titopia**")
 
 # Estado inicial
 if "nivel_anterior" not in st.session_state:
@@ -150,3 +150,4 @@ except ImportError:
 
 # Llamada inicial a la función de actualización
 actualizar_datos()
+
