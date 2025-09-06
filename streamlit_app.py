@@ -7,24 +7,32 @@ import plotly.graph_objects as go
 # =============================
 # 🔄 Auto-refresh
 # =============================
-import streamlit as st
+
+import time
 
 # =============================
-# 🔄 Auto-refresh seguro
+# 🔄 Auto-refresh seguro (compatibilidad total)
 # =============================
-import streamlit as st
-
 st.sidebar.markdown("## ⚙️ Configuración")
 tiempo = st.sidebar.slider("Intervalo de refresco (segundos)", 10, 120, 30)
 
-# Recarga automática usando JavaScript
-st.markdown(f"""
-    <script>
-    setTimeout(function(){{
-        window.location.reload(1);
-    }}, {tiempo*1000});
-    </script>
-""", unsafe_allow_html=True)
+# Contador en session_state
+if "refresh_counter" not in st.session_state:
+    st.session_state.refresh_counter = 0
+
+# Incrementa el contador y fuerza reejecución
+st.session_state.refresh_counter += 1
+
+# Mensaje de debug opcional
+st.sidebar.write(f"Refresco automático: {st.session_state.refresh_counter}")
+
+# Forzar "refresco" usando st.experimental_rerun si está disponible
+try:
+    import streamlit as st
+    st.experimental_rerun()
+except AttributeError:
+    # Si no existe experimental_rerun, usamos time.sleep para simular refresco
+    time.sleep(tiempo)
 
 # =============================
 # 🔹 Encabezado con logos
@@ -167,5 +175,6 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
