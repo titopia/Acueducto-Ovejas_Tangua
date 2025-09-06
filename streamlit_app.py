@@ -6,13 +6,13 @@ import plotly.graph_objects as go
 col1, col2, col3 = st.columns([1, 3, 1])
 
 with col1:
-    st.image("umariana.png", width=100)
+    st.image("umariana.png", width=200)
 
 with col2:
-    st.markdown("<h2 style='text-align: center; color: #004080;'>🌊 Monitoreo de Tanque de Agua</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #004080;'>🌊 Monitoreo acueducto Tambor-Ovejas</h2>", unsafe_allow_html=True)
 
 with col3:
-    st.image("grupo_social.png", width=100)
+    st.image("grupo_social.png", width=200)
 
 
 
@@ -25,7 +25,7 @@ READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
 st.set_page_config(page_title="Tanque 3D", layout="wide")
-st.title("🌊 Monitoreo de Tanque de Agua")
+st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana \n Autores:")
 
 # Estado inicial
 if "nivel_anterior" not in st.session_state:
@@ -132,6 +132,7 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
 
