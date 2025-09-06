@@ -3,6 +3,35 @@ import requests
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+st.markdown(
+    """
+    <style>
+    .fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px 0;
+        z-index: 100;
+        border-bottom: 3px solid #004080;
+    }
+    .fixed-header img {
+        max-height: 80px;
+    }
+    .fixed-header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #004080;
+        text-align: center;
+    }
+    .stApp {
+        margin-top: 140px; /* espacio para que no se tape el contenido */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 col1, col2, col3 = st.columns([1, 3, 1])
 
 with col1:
@@ -25,6 +54,7 @@ READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
 st.set_page_config(page_title="Tanque 3D", layout="wide")
+st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana \n Autores:")
 st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana \n Autores:")
 
 # Estado inicial
@@ -132,6 +162,7 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
 
