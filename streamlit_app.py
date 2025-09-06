@@ -5,49 +5,16 @@ import numpy as np
 import plotly.graph_objects as go
 st.markdown(
     """
-    <style>
-    .fixed-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 10px 0;
-        z-index: 100;
-        border-bottom: 3px solid #004080;
-    }
-    .fixed-header img {
-        max-height: 80px;
-    }
-    .fixed-header h1 {
-        margin: 0;
-        font-size: 28px;
-        color: #004080;
-        text-align: center;
-    }
-    .stApp {
-        margin-top: 140px; /* espacio para que no se tape el contenido */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# =========================
-# 🔹 Encabezado con logos y título
-# =========================
-st.markdown(
-    """
-    <div class="fixed-header">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 40px;">
-            <img src="umariana.png" alt="UMariana" />
-            <h1>🌊 Monitoreo de Tanque de Agua</h1>
-            <img src="grupo_social.png" alt="Fundación Grupo Social" />
-        </div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 50px;">
+        <img src="umariana.png" width="120"/>
+        <h2 style="margin: 0; color: #004080;">🌊 Monitoreo de Tanque de Agua</h2>
+        <img src="grupo_social.png" width="120"/>
     </div>
     """,
     unsafe_allow_html=True
 )
+
+
 
 
 # --- Configuración ---
@@ -164,4 +131,5 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
