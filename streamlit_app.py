@@ -3,15 +3,16 @@ import requests
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-st.markdown(
-    """
-    <div style="display: flex; justify-content: center; align-items: center; gap: 50px;">
-        <img src="umariana.png" width="120"/>
-        <h2 style="margin: 0; color: #004080;">🌊 Monitoreo de Tanque de Agua</h2>
-        <img src="grupo_social.png" width="120"/>
-    </div>
-    """,
-    unsafe_allow_html=True
+col1, col2, col3 = st.columns([1, 3, 1])
+
+with col1:
+    st.image("umariana.png", width=100)
+
+with col2:
+    st.markdown("<h2 style='text-align: center; color: #004080;'>🌊 Monitoreo de Tanque de Agua</h2>", unsafe_allow_html=True)
+
+with col3:
+    st.image("grupo_social.png", width=100)
 )
 
 
@@ -131,5 +132,6 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
