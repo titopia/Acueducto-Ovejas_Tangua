@@ -3,45 +3,18 @@ import requests
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-st.markdown(
-    """
-    <style>
-    .fixed-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 10px 0;
-        z-index: 100;
-        border-bottom: 3px solid #004080;
-    }
-    .fixed-header img {
-        max-height: 80px;
-    }
-    .fixed-header h1 {
-        margin: 0;
-        font-size: 28px;
-        color: #004080;
-        text-align: center;
-    }
-    .stApp {
-        margin-top: 140px; /* espacio para que no se tape el contenido */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+
 col1, col2, col3 = st.columns([1, 3, 1])
 
 with col1:
     st.image("umariana.png", width=200)
 
 with col2:
-    st.markdown("<h2 style='text-align: center; color: #004080;'>🌊 Monitoreo acueducto Tambor-Ovejas</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; background-color: white; color: #004080;'>🌊 Monitoreo acueducto Tambor-Ovejas</h2>", unsafe_allow_html=True)
 
 with col3:
     st.image("grupo_social.png", width=200)
+
 
 
 
@@ -162,6 +135,7 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
 
