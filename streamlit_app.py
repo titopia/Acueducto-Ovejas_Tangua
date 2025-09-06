@@ -7,9 +7,26 @@ import plotly.graph_objects as go
 # =============================
 # 🔄 Auto-refresh
 # =============================
+import streamlit as st
+
+# =============================
+# 🔄 Auto-refresh seguro
+# =============================
 st.sidebar.markdown("## ⚙️ Configuración")
 tiempo = st.sidebar.slider("Intervalo de refresco (segundos)", 10, 120, 30)
-st.experimental_autorefresh(interval=tiempo*1000, key="datarefresh")
+
+try:
+    # Aseguramos que tiempo sea un entero positivo
+    intervalo_ms = max(1, int(tiempo) * 1000)
+    # Intentamos usar experimental_autorefresh
+    st.experimental_autorefresh(interval=intervalo_ms, key="datarefresh")
+except AttributeError:
+    st.warning(
+        "Tu versión de Streamlit no soporta `experimental_autorefresh`. "
+        "Actualiza a la versión más reciente para habilitar refresco automático."
+    )
+except Exception as e:
+    st.error(f"No se pudo activar el refresco automático: {e}")
 
 # =============================
 # 🔹 Encabezado con logos
@@ -152,3 +169,4 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
