@@ -145,4 +145,10 @@ with tab2:
 
         fig1 = px.line(df, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
         fig2 = px.line(df, x="created_at", y="altura", markers=True, title="Altura (m)")
-        fig3 = px.line(df
+        fig3 = px.line(df, x="created_at", y="caudal", markers=True, title="Caudal (L/min)")
+
+        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig3, use_container_width=True)
+    else:
+        st.warning("No hay datos disponibles para graficar.")
