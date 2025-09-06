@@ -8,26 +8,18 @@ import time
 
 # --- Config ---
 CHANNEL_ID = "3031360"
-READ_API_KEY = st.secrets.get("READ_API_KEY", "")  # agrega esto en Streamlit Cloud si tu canal es privado
+READ_API_KEY = st.secrets.get("READ_API_KEY", "")  # secreto en Streamlit Cloud si es privado
 
 ALTURA_MIN, ALTURA_MAX = 0.0, 2.53   # m
 VOLUMEN_MIN, VOLUMEN_MAX = 0.0, 80.0 # m³
 ANCHO, ALTO = 2, 4
-
-# Intentar auto-refresh opcional (requiere package streamlit-autorefresh en requirements)
-try:
-    from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=5000, limit=None)  # 5000 ms = 5 s
-except Exception:
-    # si no está instalado, la app seguirá funcionando y el usuario puede usar "Refrescar" del navegador
-    pass
 
 st.set_page_config(page_title="Monitoreo Tanque", layout="wide")
 st.title("🌊 Monitoreo de Tanque (ThingSpeak)")
 
 # Dataframe en sesión para histórico
 if "df" not in st.session_state:
-    st.session_state.df = pd.DataFrame(columns=["timestamp", "altura_m", "volumen_m3"])
+    st.session_state.df = pd.DataFrame(columns=["timestamp", "altura_m", "volumen_m3", "field2"])
 
 # Función que obtiene la última lectura
 def obtener_datos():
@@ -40,21 +32,22 @@ def obtener_datos():
         if feeds:
             f = feeds[0]
             altura = float(f.get("field1") or ALTURA_MIN)
+            valor2 = float(f.get("field2") or 0.0)
             volumen = float(f.get("field3") or VOLUMEN_MIN)
         else:
-            altura, volumen = ALTURA_MIN, VOLUMEN_MIN
+            altura, valor2, volumen = ALTURA_MIN, 0.0, VOLUMEN_MIN
     except Exception as e:
         st.error(f"Error consultando ThingSpeak: {e}")
-        altura, volumen = ALTURA_MIN, VOLUMEN_MIN
+        altura, valor2, volumen = ALTURA_MIN, 0.0, VOLUMEN_MIN
 
     nivel = (volumen - VOLUMEN_MIN) / (VOLUMEN_MAX - VOLUMEN_MIN)
     nivel = max(0.0, min(1.0, nivel))
-    return altura, volumen, nivel
+    return altura, valor2, volumen, nivel
 
 # Obtener lectura actual y guardar en histórico
-altura, volumen, nivel = obtener_datos()
+altura, valor2, volumen, nivel = obtener_datos()
 ts = time.strftime("%Y-%m-%d %H:%M:%S")
-st.session_state.df.loc[len(st.session_state.df)] = [ts, altura, volumen]
+st.session_state.df.loc[len(st.session_state.df)] = [ts, altura, volumen, valor2]
 
 # Layout: 2 columnas
 col1, col2 = st.columns([1, 2])
@@ -86,17 +79,22 @@ with col1:
     st.metric("Nivel (%)", f"{nivel*100:.1f}%")
     st.metric("Altura (m)", f"{altura:.2f} m")
     st.metric("Volumen (m³)", f"{volumen:.2f} m³")
+    st.metric("Field2", f"{valor2:.2f}")
 
 with col2:
     df_show = st.session_state.df.copy()
     df_show.index = df_show["timestamp"]
-    df_show = df_show[["altura_m", "volumen_m3"]]
 
-    st.subheader("Histórico reciente")
-    st.line_chart(df_show)
+    st.subheader("📈 Histórico por variable")
+
+    # Gráfico Altura
+    st.line_chart(df_show[["altura_m"]], height=200)
+
+    # Gráfico Volumen
+    st.line_chart(df_show[["volumen_m3"]], height=200)
 
     # Descargar CSV
     csv = st.session_state.df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Descargar histórico (CSV)", csv, "historico_tanque.csv", "text/csv")
 
-st.caption("La app consulta ThingSpeak cada vez que se recarga. Si instalas 'streamlit-autorefresh' la página se actualizará automáticamente cada 5 s.")
+st.caption("La app consulta ThingSpeak cada vez que se recarga o se actualiza automáticamente si usas streamlit-autorefresh.")
