@@ -8,11 +8,11 @@ import plotly.graph_objects as go
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 
-ALTURA_MIN, ALTURA_MAX = 0.0, 2.53   # metros
-VOLUMEN_MIN, VOLUMEN_MAX = 0.0, 80.0 # m³
+ALTURA_MAX = 2.53    # metros
+VOLUMEN_MAX = 80.0   # m³
 
 st.set_page_config(page_title="Tanque 3D", layout="wide")
-st.title("🌊 Monitoreo de Tanque de Agua")
+st.title("🌊 Monitoreo Acueducto Ovejas.\n Ingenieria Mecatrónica - Universidad Mariana\n Autores:")
 
 # Estado inicial
 if "nivel_anterior" not in st.session_state:
@@ -39,10 +39,10 @@ def obtener_datos(resultados=10):
         return pd.DataFrame()
 
 # --- Pestañas ---
-tab1, tab2 = st.tabs(["🌀 Tanque 3D", "📈 Gráficas históricas"])
+tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen)", "📈 Gráficas históricas"])
 
 with tab1:
-    st.subheader("Tanque en 3D con animación suave")
+    st.subheader("Tanque en 3D mostrando Volumen (m³)")
 
     df = obtener_datos(resultados=1)
     if not df.empty:
@@ -50,10 +50,10 @@ with tab1:
         caudal = df["caudal"].iloc[-1]
         volumen = df["volumen"].iloc[-1]
     else:
-        altura, caudal, volumen = ALTURA_MIN, 0.0, VOLUMEN_MIN
+        altura, caudal, volumen = 0.0, 0.0, 0.0
 
-    # Normalizar volumen
-    nivel_objetivo = (volumen - VOLUMEN_MIN) / (VOLUMEN_MAX - VOLUMEN_MIN)
+    # Normalizar volumen (0 a 1)
+    nivel_objetivo = volumen / VOLUMEN_MAX
     nivel_objetivo = max(0.0, min(1.0, nivel_objetivo))
 
     # Interpolación suave
@@ -61,16 +61,20 @@ with tab1:
     st.session_state.nivel_anterior = nivel_objetivo
     nivel_suave = niveles[-1]
 
-    # Cilindro tanque
+    # Calcular altura de agua según volumen
+    altura_agua = nivel_suave * ALTURA_MAX
+
+    # Geometría del cilindro
     theta = np.linspace(0, 2*np.pi, 50)
     x = np.cos(theta)
     y = np.sin(theta)
 
+    # Superficie del tanque
     z_tanque = np.linspace(0, ALTURA_MAX, 2)
     x_tanque, z1 = np.meshgrid(x, z_tanque)
     y_tanque, z2 = np.meshgrid(y, z_tanque)
 
-    altura_agua = nivel_suave * ALTURA_MAX
+    # Superficie del agua
     z_agua = np.linspace(0, altura_agua, 2)
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
@@ -91,11 +95,11 @@ with tab1:
 
     st.plotly_chart(fig, use_container_width=True)
 
-    # Valores en display
+    # Displays
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
-    c2.metric("Altura (m)", f"{altura:.2f}")
-    c3.metric("Volumen (m³)", f"{volumen:.2f}")
+    c2.metric("Volumen (m³)", f"{volumen:.2f}")
+    c3.metric("Altura (m)", f"{altura:.2f}")
     c4.metric("Caudal (L/min)", f"{caudal:.2f}")
 
 with tab2:
@@ -105,8 +109,8 @@ with tab2:
     if not df.empty:
         import plotly.express as px
 
-        fig1 = px.line(df, x="created_at", y="altura", markers=True, title="Altura (m)")
-        fig2 = px.line(df, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
+        fig1 = px.line(df, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
+        fig2 = px.line(df, x="created_at", y="altura", markers=True, title="Altura (m)")
         fig3 = px.line(df, x="created_at", y="caudal", markers=True, title="Caudal (L/min)")
 
         st.plotly_chart(fig1, use_container_width=True)
