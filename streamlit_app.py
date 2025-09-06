@@ -13,7 +13,7 @@ with col2:
 
 with col3:
     st.image("grupo_social.png", width=100)
-)
+
 
 
 
@@ -132,6 +132,7 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
 
