@@ -1,3 +1,4 @@
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -8,11 +9,10 @@ import plotly.graph_objects as go
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 
-ALTURA_MAX = 2.53    # metros
 VOLUMEN_MAX = 80.0   # m³
 
-st.set_page_config(page_title="Tanque 3D", layout="wide")
-st.title("🌊 Monitoreo Acueducto Ovejas.\n Ingenieria Mecatrónica - Universidad Mariana\n Autores:")
+st.set_page_config(page_title="Tanque", layout="wide")
+st.title("🌊 Monitoreo Acueducto Ovejas.\n Ingenieria Mecatrónica - Universidad Mariana \n Autores:")
 
 # Estado inicial
 if "nivel_anterior" not in st.session_state:
@@ -39,10 +39,10 @@ def obtener_datos(resultados=10):
         return pd.DataFrame()
 
 # --- Pestañas ---
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen)", "📈 Gráficas históricas"])
+tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
 
 with tab1:
-    st.subheader("Tanque en 3D mostrando Volumen (m³)")
+    st.subheader("Tanque en 3D mostrando % de Volumen")
 
     df = obtener_datos(resultados=1)
     if not df.empty:
@@ -61,20 +61,21 @@ with tab1:
     st.session_state.nivel_anterior = nivel_objetivo
     nivel_suave = niveles[-1]
 
-    # Calcular altura de agua según volumen
-    altura_agua = nivel_suave * ALTURA_MAX
+    # Escala del tanque en %
+    ALTURA_ESCALA = 100
+    altura_agua = nivel_suave * ALTURA_ESCALA
 
     # Geometría del cilindro
     theta = np.linspace(0, 2*np.pi, 50)
     x = np.cos(theta)
     y = np.sin(theta)
 
-    # Superficie del tanque
-    z_tanque = np.linspace(0, ALTURA_MAX, 2)
+    # Superficie del tanque (0–100%)
+    z_tanque = np.linspace(0, ALTURA_ESCALA, 2)
     x_tanque, z1 = np.meshgrid(x, z_tanque)
     y_tanque, z2 = np.meshgrid(y, z_tanque)
 
-    # Superficie del agua
+    # Agua
     z_agua = np.linspace(0, altura_agua, 2)
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
@@ -87,7 +88,7 @@ with tab1:
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
-            zaxis=dict(range=[0, ALTURA_MAX], title="Altura (m)")
+            zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")
         ),
         margin=dict(l=0, r=0, t=0, b=0),
         height=500
@@ -98,7 +99,7 @@ with tab1:
     # Displays
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
-    c2.metric("Volumen (m³)", f"{volumen:.2f}")
+    c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
     c3.metric("Altura (m)", f"{altura:.2f}")
     c4.metric("Caudal (L/min)", f"{caudal:.2f}")
 
@@ -118,3 +119,5 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
+
