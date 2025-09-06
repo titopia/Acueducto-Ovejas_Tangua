@@ -1,123 +1,144 @@
-
 import streamlit as st
 import requests
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 
-# --- Configuración ---
-CHANNEL_ID = "3031360"
-READ_API_KEY = st.secrets.get("READ_API_KEY", "")
+# =========================
+# 🔹 Estilos para encabezado fijo
+# =========================
+st.markdown(
+    """
+    <style>
+    .fixed-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 10px 0;
+        z-index: 100;
+        border-bottom: 3px solid #004080;
+    }
+    .fixed-header img {
+        max-height: 80px;
+    }
+    .fixed-header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #004080;
+        text-align: center;
+    }
+    .stApp {
+        margin-top: 140px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-VOLUMEN_MAX = 80.0   # m³
+# =========================
+# 🔹 Encabezado
+# =========================
+st.markdown(
+    """
+    <div class="fixed-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 40px;">
+            <img src="umariana.png" alt="UMariana" />
+            <h1>🌊 Monitoreo de Tanque de Agua</h1>
+            <img src="grupo_social.png" alt="Fundación Grupo Social" />
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-st.set_page_config(page_title="Tanque", layout="wide")
-st.title("🌊 Monitoreo Acueducto Ovejas.\n Ingenieria Mecatrónica - Universidad Mariana \n Autores:")
+# =========================
+# 🔹 Obtener datos ThingSpeak
+# =========================
+def get_data():
+    url = "https://api.thingspeak.com/channels/3031360/feeds.json?results=10"
+    data = requests.get(url).json()
+    feeds = data["feeds"]
+    df = pd.DataFrame(feeds)
+    df["created_at"] = pd.to_datetime(df["created_at"])
+    df["field1"] = pd.to_numeric(df["field1"], errors="coerce")  # altura
+    df["field2"] = pd.to_numeric(df["field2"], errors="coerce")  # caudal
+    df["field3"] = pd.to_numeric(df["field3"], errors="coerce")  # volumen
+    return df
 
-# Estado inicial
-if "nivel_anterior" not in st.session_state:
-    st.session_state.nivel_anterior = 0.0
+df = get_data()
 
-# --- Función para obtener datos ---
-def obtener_datos(resultados=10):
-    url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
-    try:
-        r = requests.get(url, timeout=8)
-        r.raise_for_status()
-        data = r.json()
-        feeds = data.get("feeds", [])
-        if not feeds:
-            return pd.DataFrame()
-        df = pd.DataFrame(feeds)
-        df["created_at"] = pd.to_datetime(df["created_at"])
-        df["altura"] = pd.to_numeric(df["field1"], errors="coerce")
-        df["caudal"] = pd.to_numeric(df["field2"], errors="coerce")
-        df["volumen"] = pd.to_numeric(df["field3"], errors="coerce")
-        return df.dropna()
-    except Exception as e:
-        st.error(f"Error obteniendo datos: {e}")
-        return pd.DataFrame()
+# =========================
+# 🔹 Tabs
+# =========================
+tab1, tab2, tab3, tab4 = st.tabs(["📏 Altura", "📦 Volumen", "💧 Caudal", "🛢️ Tanque 3D"])
 
-# --- Pestañas ---
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
-
+# --- Altura ---
 with tab1:
-    st.subheader("Tanque en 3D mostrando % de Volumen")
+    st.subheader("Altura del Agua (m)")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df["created_at"], y=df["field1"], mode="lines+markers", name="Altura"))
+    fig.update_layout(yaxis_title="Altura (m)", xaxis_title="Tiempo")
+    st.plotly_chart(fig, use_container_width=True)
 
-    df = obtener_datos(resultados=1)
-    if not df.empty:
-        altura = df["altura"].iloc[-1]
-        caudal = df["caudal"].iloc[-1]
-        volumen = df["volumen"].iloc[-1]
-    else:
-        altura, caudal, volumen = 0.0, 0.0, 0.0
+# --- Volumen ---
+with tab2:
+    st.subheader("Volumen del Tanque (m³)")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df["created_at"], y=df["field3"], mode="lines+markers", name="Volumen"))
+    fig.update_layout(yaxis_title="Volumen (m³)", xaxis_title="Tiempo")
+    st.plotly_chart(fig, use_container_width=True)
 
-    # Normalizar volumen (0 a 1)
-    nivel_objetivo = volumen / VOLUMEN_MAX
-    nivel_objetivo = max(0.0, min(1.0, nivel_objetivo))
+# --- Caudal ---
+with tab3:
+    st.subheader("Caudal (L/min)")
+    st.metric("Último valor", f"{df['field2'].iloc[-1]:.2f} L/min")
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=df["created_at"], y=df["field2"], name="Caudal"))
+    fig.update_layout(yaxis_title="Caudal (L/min)", xaxis_title="Tiempo")
+    st.plotly_chart(fig, use_container_width=True)
 
-    # Interpolación suave
-    niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
-    st.session_state.nivel_anterior = nivel_objetivo
-    nivel_suave = niveles[-1]
+# --- Tanque 3D ---
+with tab4:
+    st.subheader("Nivel del Tanque (3D Realista)")
 
-    # Escala del tanque en %
-    ALTURA_ESCALA = 100
-    altura_agua = nivel_suave * ALTURA_ESCALA
+    volumen_actual = df["field3"].iloc[-1]
+    porcentaje = (volumen_actual / 80) * 100  # escala 0-80 m³ → 0-100%
 
-    # Geometría del cilindro
-    theta = np.linspace(0, 2*np.pi, 50)
-    x = np.cos(theta)
-    y = np.sin(theta)
-
-    # Superficie del tanque (0–100%)
-    z_tanque = np.linspace(0, ALTURA_ESCALA, 2)
-    x_tanque, z1 = np.meshgrid(x, z_tanque)
-    y_tanque, z2 = np.meshgrid(y, z_tanque)
-
-    # Agua
-    z_agua = np.linspace(0, altura_agua, 2)
-    x_agua, z3 = np.meshgrid(x, z_agua)
-    y_agua, z4 = np.meshgrid(y, z_agua)
+    # Altura del agua proporcional al tanque (altura máxima = 2)
+    altura_agua = 2 * (porcentaje / 100)
 
     fig = go.Figure()
-    fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="Greys")
-    fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False, opacity=0.6, colorscale="Blues")
+
+    # 🔹 Tanque (cilindro transparente)
+    fig.add_trace(go.Mesh3d(
+        x=[1,1,-1,-1,1,1,-1,-1],
+        y=[1,-1,-1,1,1,-1,-1,1],
+        z=[0,0,0,0,2,2,2,2],  # altura fija del tanque
+        color="lightgrey",
+        opacity=0.2,
+        name="Tanque",
+        alphahull=0
+    ))
+
+    # 🔹 Agua (relleno azul hasta la altura proporcional)
+    fig.add_trace(go.Mesh3d(
+        x=[1,1,-1,-1,1,1,-1,-1],
+        y=[1,-1,-1,1,1,-1,-1,1],
+        z=[0,0,0,0,altura_agua,altura_agua,altura_agua,altura_agua],
+        color="blue",
+        opacity=0.6,
+        name="Agua",
+        alphahull=0
+    ))
 
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
-            zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")
+            zaxis=dict(range=[0,2], title="Altura"),
         ),
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=500
+        title=f"Volumen actual: {volumen_actual:.2f} m³ ({porcentaje:.1f} %)"
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-    # Displays
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
-    c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
-    c3.metric("Altura (m)", f"{altura:.2f}")
-    c4.metric("Caudal (L/min)", f"{caudal:.2f}")
-
-with tab2:
-    st.subheader("Últimos 10 valores")
-
-    df = obtener_datos(resultados=10)
-    if not df.empty:
-        import plotly.express as px
-
-        fig1 = px.line(df, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
-        fig2 = px.line(df, x="created_at", y="altura", markers=True, title="Altura (m)")
-        fig3 = px.line(df, x="created_at", y="caudal", markers=True, title="Caudal (L/min)")
-
-        st.plotly_chart(fig1, use_container_width=True)
-        st.plotly_chart(fig2, use_container_width=True)
-        st.plotly_chart(fig3, use_container_width=True)
-    else:
-        st.warning("No hay datos disponibles para graficar.")
-
-
