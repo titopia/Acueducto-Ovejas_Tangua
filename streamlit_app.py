@@ -12,21 +12,19 @@ import streamlit as st
 # =============================
 # 🔄 Auto-refresh seguro
 # =============================
+import streamlit as st
+
 st.sidebar.markdown("## ⚙️ Configuración")
 tiempo = st.sidebar.slider("Intervalo de refresco (segundos)", 10, 120, 30)
 
-try:
-    # Aseguramos que tiempo sea un entero positivo
-    intervalo_ms = max(1, int(tiempo) * 1000)
-    # Intentamos usar experimental_autorefresh
-    st.experimental_autorefresh(interval=intervalo_ms, key="datarefresh")
-except AttributeError:
-    st.warning(
-        "Tu versión de Streamlit no soporta `experimental_autorefresh`. "
-        "Actualiza a la versión más reciente para habilitar refresco automático."
-    )
-except Exception as e:
-    st.error(f"No se pudo activar el refresco automático: {e}")
+# Recarga automática usando JavaScript
+st.markdown(f"""
+    <script>
+    setTimeout(function(){{
+        window.location.reload(1);
+    }}, {tiempo*1000});
+    </script>
+""", unsafe_allow_html=True)
 
 # =============================
 # 🔹 Encabezado con logos
@@ -169,4 +167,5 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
