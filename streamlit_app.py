@@ -27,8 +27,8 @@ READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
 st.set_page_config(page_title="Tanque 3D", layout="wide")
-st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana \n Autores:")
-st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana \n Autores:")
+st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
+st.title("Autores:")
 
 # Estado inicial
 if "nivel_anterior" not in st.session_state:
@@ -135,6 +135,7 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
 
