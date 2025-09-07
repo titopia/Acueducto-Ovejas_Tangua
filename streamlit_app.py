@@ -1,10 +1,3 @@
-# ============================================
-# 🌊 Monitoreo Acueducto Ovejas Tangua
-# ============================================
-# Universidad Mariana - Ingeniería Mecatrónica
-# Autores: Titopia
-# ============================================
-
 import streamlit as st
 import requests
 import pandas as pd
@@ -16,36 +9,56 @@ import plotly.express as px
 # 🔹 Configuración general
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
-st.sidebar.markdown("## ⚙️ Configuración")
 
-# Intervalo de actualización en segundos
-intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 30)
+# Intervalo fijo de actualización: 60 segundos
+INTERVALO = 60  
 
-# Configuración ThingSpeak
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
-# =============================
-# 🔹 Auto-refresh (compatibilidad)
-# =============================
+# 🔄 Auto-refresh compatible
 try:
-    # Streamlit >= 1.18
     from streamlit.runtime.scriptrunner import st_autorefresh
-    st_autorefresh(interval=intervalo*1000, key="autorefresh")
+    st_autorefresh(interval=INTERVALO*1000, key="autorefresh")
 except Exception:
     try:
-        # Streamlit < 1.18
-        st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
+        st.experimental_autorefresh(interval=INTERVALO*1000, key="autorefresh")
     except Exception:
-        # Fallback HTML meta refresh
-        st.markdown(
-            f"""
-            <meta http-equiv="refresh" content="{intervalo}">
-            """,
-            unsafe_allow_html=True
-        )
-        st.info("⚠️ Usando recarga automática por HTML (modo fallback).")
+        st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
+
+st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
+st.write("**Autores: Titopia**")
+
+# =============================
+# 🔹 Estado inicial
+# =============================
+if "nivel_anterior" not in st.session_state:
+    st.session_state.nivel_anterior = 0.0
+
+# =============================
+# 🔹 Función para obtener datos
+# =============================
+def obtener_datos(resultados=10):
+    url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
+    try:
+        r = requests.get(url, timeout=8)
+        r.raise_for_status()
+        data = r.json()
+        feeds = data.get("feeds", [])
+        if not feeds:
+            return pd.DataFrame()
+        df = pd.DataFrame(feeds)
+        df["created_at"] = pd.to_datetime(df["created_at"])
+        df["altura"] = pd.to_numeric(df["field1"], errors="coerce")
+        df["caudal"] = pd.to_numeric(df["field2"], errors="coerce")
+        df["volumen"] = pd.to_numeric(df["field3"], errors="coerce")
+        df["humedad"] = pd.to_numeric(df["field6"], errors="coerce")
+        df["temperatura"] = pd.to_numeric(df["field7"], errors="coerce")
+        return df.dropna()
+    except Exception as e:
+        st.error(f"Error obteniendo datos: {e}")
+        return pd.DataFrame()
 
 # =============================
 # 🔹 Encabezado con logos
@@ -62,43 +75,14 @@ with col2:
 with col3:
     st.image("grupo_social.png", width=200)
 
-st.title("🌊 Acueducto Ovejas Tangua")
-st.write("**Ingeniería Mecatrónica - Universidad Mariana**")
-st.write("**Autores: Titopia**")
-
 # =============================
-# 🔹 Estado inicial
+# 🔹 Pestañas
 # =============================
-if "nivel_anterior" not in st.session_state:
-    st.session_state.nivel_anterior = 0.0
-
-# =============================
-# 🔹 Función para obtener datos
-# =============================
-def obtener_datos(resultados=10):
-    """Consulta los últimos datos de ThingSpeak y retorna un DataFrame limpio."""
-    url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
-    try:
-        r = requests.get(url, timeout=8)
-        r.raise_for_status()
-        data = r.json()
-        feeds = data.get("feeds", [])
-        if not feeds:
-            return pd.DataFrame()
-        df = pd.DataFrame(feeds)
-        df["created_at"] = pd.to_datetime(df["created_at"])
-        df["altura"] = pd.to_numeric(df["field1"], errors="coerce")
-        df["caudal"] = pd.to_numeric(df["field2"], errors="coerce")
-        df["volumen"] = pd.to_numeric(df["field3"], errors="coerce")
-        return df.dropna()
-    except Exception as e:
-        st.error(f"Error obteniendo datos: {e}")
-        return pd.DataFrame()
-
-# =============================
-# 🔹 Pestañas principales
-# =============================
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
+tab1, tab2, tab3 = st.tabs([
+    "🌀 Tanque 3D (Volumen %)",
+    "📈 Gráficas históricas",
+    "🌡️ Ambiente (Temp & Humedad)"
+])
 
 # =============================
 # 🔹 TAB 1: Tanque 3D
@@ -107,7 +91,6 @@ with tab1:
     st.subheader("Tanque en 3D mostrando % de Volumen")
     df_ultimo = obtener_datos(resultados=1)
 
-    # Valores actuales
     if not df_ultimo.empty:
         altura = df_ultimo["altura"].iloc[-1]
         caudal = df_ultimo["caudal"].iloc[-1]
@@ -115,13 +98,12 @@ with tab1:
     else:
         altura, caudal, volumen = 0.0, 0.0, 0.0
 
-    # Nivel normalizado (0–1)
+    # Nivel normalizado
     nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
     niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
     st.session_state.nivel_anterior = nivel_objetivo
     nivel_suave = niveles[-1]
 
-    # Escala del tanque
     ALTURA_ESCALA = 100
     altura_agua = nivel_suave * ALTURA_ESCALA
 
@@ -135,16 +117,16 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
-    # Color dinámico del tanque
+    # --- Color dinámico del tanque según nivel ---
     if nivel_objetivo <= 0.3:  # ≤ 30 %
         tanque_color = "Reds"
         tanque_opacidad = 0.5
         st.error(f"⚠️ El tanque está en nivel crítico ({nivel_objetivo*100:.1f}%)")
     else:
-        tanque_color = "Greens"
+        tanque_color = "Greys"
         tanque_opacidad = 0.3
 
-    # Construcción gráfica
+    # --- Plot ---
     fig = go.Figure()
     fig.add_surface(
         x=x_tanque, y=y_tanque, z=z1,
@@ -168,7 +150,7 @@ with tab1:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Indicadores
+    # --- Indicadores ---
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
@@ -193,3 +175,61 @@ with tab2:
     else:
         st.warning("No hay datos disponibles para graficar.")
 
+# =============================
+# 🔹 TAB 3: Temperatura y Humedad
+# =============================
+with tab3:
+    st.subheader("🌡️ Temperatura y Humedad ambiente")
+
+    df_ambiente = obtener_datos(resultados=1)
+
+    if not df_ambiente.empty:
+        temp = df_ambiente["temperatura"].iloc[-1]
+        hum = df_ambiente["humedad"].iloc[-1]
+
+        col1, col2 = st.columns(2)
+
+        # Termómetro
+        with col1:
+            fig_temp = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=temp,
+                title={"text": "Temperatura (°C)"},
+                gauge={
+                    "axis": {"range": [0, 50]},
+                    "bar": {"color": "red"},
+                    "steps": [
+                        {"range": [0, 15], "color": "lightblue"},
+                        {"range": [15, 30], "color": "lightgreen"},
+                        {"range": [30, 50], "color": "orange"}
+                    ]
+                }
+            ))
+            fig_temp.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+            st.plotly_chart(fig_temp, use_container_width=True)
+
+        # Higrómetro
+        with col2:
+            fig_hum = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=hum,
+                title={"text": "Humedad (%)"},
+                gauge={
+                    "axis": {"range": [0, 100]},
+                    "bar": {"color": "blue"},
+                    "steps": [
+                        {"range": [0, 30], "color": "lightyellow"},
+                        {"range": [30, 70], "color": "lightgreen"},
+                        {"range": [70, 100], "color": "lightblue"}
+                    ]
+                }
+            ))
+            fig_hum.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+            st.plotly_chart(fig_hum, use_container_width=True)
+
+        # Métricas rápidas
+        c1, c2 = st.columns(2)
+        c1.metric("🌡️ Temp. actual (°C)", f"{temp:.1f}")
+        c2.metric("💧 Humedad (%)", f"{hum:.1f}")
+    else:
+        st.warning("No hay datos de temperatura y humedad disponibles.")
