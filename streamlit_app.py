@@ -68,10 +68,9 @@ contenedor_tab1 = tab1.empty()
 contenedor_tab2 = tab2.empty()
 
 # =============================
-# 🔹 Loop de actualización con contenedores
+# 🔹 Loop de actualización
 # =============================
 def actualizar_datos():
-    # Últimos datos
     df_ultimo = obtener_datos(resultados=1)
     df_historico = obtener_datos(resultados=10)
 
@@ -92,15 +91,3 @@ def actualizar_datos():
         nivel_suave = niveles[-1]
         ALTURA_ESCALA = 100
         altura_agua = nivel_suave * ALTURA_ESCALA
-
-        # Geometría cilindro
-        theta = np.linspace(0, 2*np.pi, 50)
-        x, y = np.cos(theta), np.sin(theta)
-        z_tanque = np.linspace(0, ALTURA_ESCALA, 2)
-        x_tanque, z1 = np.meshgrid(x, z_tanque)
-        y_tanque, z2 = np.meshgrid(y, z_tanque)
-        z_agua = np.linspace(0, altura_agua, 2)
-        x_agua, z3 = np.meshgrid(x, z_agua)
-        y_agua, z4 = np.meshgrid(y, z_agua)
-
-        # F
