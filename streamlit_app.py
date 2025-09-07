@@ -26,7 +26,7 @@ except Exception:
     except Exception:
         st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
 
-st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
+st.title("Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
 st.write("**Autores: Titopia**")
 
 # =============================
@@ -66,7 +66,7 @@ with col1:
 with col2:
     st.markdown(
         "<h2 style='text-align: center; background-color: white; color: #004080;'>"
-        "🌊 Monitoreo acueducto Tambor-Ovejas</h2>",
+        "Monitoreo acueducto Tambor-Ovejas</h2>",
         unsafe_allow_html=True
     )
 with col3:
@@ -75,10 +75,10 @@ with col3:
 # =============================
 # 🔹 Pestañas
 # =============================
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
+tab1, tab2 = st.tabs(["Tanque (Volumen %)", "📈 Gráficas históricas"])
 
 with tab1:
-    st.subheader("Tanque en 3D mostrando % de Volumen")
+    st.subheader("Tanque: Volumen (%)")
     df_ultimo = obtener_datos(resultados=1)
 
     if not df_ultimo.empty:
@@ -161,4 +161,5 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
