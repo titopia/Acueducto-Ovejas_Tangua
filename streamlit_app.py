@@ -120,11 +120,23 @@ with tab1:
         paper_bg = "white"
 
     fig.update_layout(
-        scene=scene_config,
+       scene=scene_config,
         margin=dict(l=0, r=0, t=0, b=0),
         height=500,
         paper_bgcolor=paper_bg,
-        plot_bgcolor=paper_bg
+        plot_bgcolor=paper_bg,
+        scene_camera=dict(eye=dict(x=1.5, y=1.5, z=1.2)),  # 📌 mueve la cámara
+        scene=dict(
+            zaxis=dict(
+                range=[0, ALTURA_ESCALA],
+                title="Volumen (%)",
+                titlefont=dict(size=14, color="black"),
+                tickfont=dict(size=12, color="black"),
+                showgrid=True,
+                gridcolor="black",
+                zeroline=False
+            )
+        )
     )
 
     st.plotly_chart(fig, use_container_width=True)
