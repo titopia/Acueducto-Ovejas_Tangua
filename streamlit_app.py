@@ -129,15 +129,23 @@ with tab1:
             showscale=False, opacity=0.6, colorscale="Blues"
         )
 
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=500
-    )
+fig.update_layout(
+    scene=dict(
+        xaxis=dict(visible=False, backgroundcolor="white", gridcolor="lightgrey"),
+        yaxis=dict(visible=False, backgroundcolor="white", gridcolor="lightgrey"),
+        zaxis=dict(
+            range=[0, ALTURA_ESCALA],
+            title="Volumen (%)",
+            backgroundcolor="white",
+            gridcolor="lightgrey",
+            showbackground=True
+        )
+    ),
+    margin=dict(l=0, r=0, t=0, b=0),
+    height=500,
+    paper_bgcolor="white",   # Fondo general de la figura
+    plot_bgcolor="white"     # Fondo de la zona de trazado
+)
     st.plotly_chart(fig, use_container_width=True)
 
     # --- Indicadores ---
@@ -161,5 +169,6 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
 
 
