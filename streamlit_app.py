@@ -1,3 +1,10 @@
+# ============================================
+# 🌊 Monitoreo Acueducto Ovejas Tangua
+# ============================================
+# Universidad Mariana - Ingeniería Mecatrónica
+# Autores: Titopia
+# ============================================
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -10,23 +17,53 @@ import plotly.express as px
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
 st.sidebar.markdown("## ⚙️ Configuración")
+
+# Intervalo de actualización en segundos
 intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 30)
 
+# Configuración ThingSpeak
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
-# 🔄 Auto-refresh compatible
+# =============================
+# 🔹 Auto-refresh (compatibilidad)
+# =============================
 try:
+    # Streamlit >= 1.18
     from streamlit.runtime.scriptrunner import st_autorefresh
     st_autorefresh(interval=intervalo*1000, key="autorefresh")
 except Exception:
     try:
+        # Streamlit < 1.18
         st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
     except Exception:
-        st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
+        # Fallback HTML meta refresh
+        st.markdown(
+            f"""
+            <meta http-equiv="refresh" content="{intervalo}">
+            """,
+            unsafe_allow_html=True
+        )
+        st.info("⚠️ Usando recarga automática por HTML (modo fallback).")
 
-st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
+# =============================
+# 🔹 Encabezado con logos
+# =============================
+col1, col2, col3 = st.columns([1, 3, 1])
+with col1:
+    st.image("umariana.png", width=200)
+with col2:
+    st.markdown(
+        "<h2 style='text-align: center; background-color: white; color: #004080;'>"
+        "🌊 Monitoreo acueducto Tambor-Ovejas</h2>",
+        unsafe_allow_html=True
+    )
+with col3:
+    st.image("grupo_social.png", width=200)
+
+st.title("🌊 Acueducto Ovejas Tangua")
+st.write("**Ingeniería Mecatrónica - Universidad Mariana**")
 st.write("**Autores: Titopia**")
 
 # =============================
@@ -39,6 +76,7 @@ if "nivel_anterior" not in st.session_state:
 # 🔹 Función para obtener datos
 # =============================
 def obtener_datos(resultados=10):
+    """Consulta los últimos datos de ThingSpeak y retorna un DataFrame limpio."""
     url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
     try:
         r = requests.get(url, timeout=8)
@@ -58,29 +96,18 @@ def obtener_datos(resultados=10):
         return pd.DataFrame()
 
 # =============================
-# 🔹 Encabezado con logos
-# =============================
-col1, col2, col3 = st.columns([1, 3, 1])
-with col1:
-    st.image("umariana.png", width=200)
-with col2:
-    st.markdown(
-        "<h2 style='text-align: center; background-color: white; color: #004080;'>"
-        "🌊 Monitoreo acueducto Tambor-Ovejas</h2>",
-        unsafe_allow_html=True
-    )
-with col3:
-    st.image("grupo_social.png", width=200)
-
-# =============================
-# 🔹 Pestañas
+# 🔹 Pestañas principales
 # =============================
 tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
 
+# =============================
+# 🔹 TAB 1: Tanque 3D
+# =============================
 with tab1:
     st.subheader("Tanque en 3D mostrando % de Volumen")
     df_ultimo = obtener_datos(resultados=1)
 
+    # Valores actuales
     if not df_ultimo.empty:
         altura = df_ultimo["altura"].iloc[-1]
         caudal = df_ultimo["caudal"].iloc[-1]
@@ -88,12 +115,13 @@ with tab1:
     else:
         altura, caudal, volumen = 0.0, 0.0, 0.0
 
-    # Nivel normalizado
+    # Nivel normalizado (0–1)
     nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
     niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
     st.session_state.nivel_anterior = nivel_objetivo
     nivel_suave = niveles[-1]
 
+    # Escala del tanque
     ALTURA_ESCALA = 100
     altura_agua = nivel_suave * ALTURA_ESCALA
 
@@ -107,7 +135,7 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
-    # --- Color dinámico del tanque según nivel ---
+    # Color dinámico del tanque
     if nivel_objetivo <= 0.3:  # ≤ 30 %
         tanque_color = "Reds"
         tanque_opacidad = 0.5
@@ -116,7 +144,7 @@ with tab1:
         tanque_color = "Greys"
         tanque_opacidad = 0.3
 
-    # --- Plot ---
+    # Construcción gráfica
     fig = go.Figure()
     fig.add_surface(
         x=x_tanque, y=y_tanque, z=z1,
@@ -140,13 +168,16 @@ with tab1:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # --- Indicadores ---
+    # Indicadores
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
     c3.metric("Altura (m)", f"{altura:.2f}")
     c4.metric("Caudal (L/min)", f"{caudal:.2f}")
 
+# =============================
+# 🔹 TAB 2: Gráficas históricas
+# =============================
 with tab2:
     st.subheader("Últimos 10 valores")
     df_historico = obtener_datos(resultados=10)
