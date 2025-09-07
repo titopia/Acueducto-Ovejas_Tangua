@@ -65,7 +65,7 @@ with col3:
 # =============================
 # 🔹 Pestañas
 # =============================
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
+tab1, tab2 = st.tabs(["🌀 Tanque 3D (Nivel %)", "📈 Gráficas históricas"])
 
 # =============================
 # 🔹 Función para actualizar datos y gráficas
@@ -76,7 +76,7 @@ def actualizar_datos():
 
     # --- Tanque 3D ---
     with tab1:
-        st.subheader("Tanque en 3D mostrando % de Volumen")
+        st.subheader("Tanque en 3D mostrando Nivel (%)")
 
         if not df_ultimo.empty:
             altura = df_ultimo["altura"].iloc[-1]
@@ -85,7 +85,11 @@ def actualizar_datos():
         else:
             altura, caudal, volumen = 0.0, 0.0, 0.0
 
+        # Nivel en porcentaje
         nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
+        porcentaje = nivel_objetivo * 100
+
+        # Suavizado
         niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
         st.session_state.nivel_anterior = nivel_objetivo
         nivel_suave = niveles[-1]
@@ -115,7 +119,7 @@ def actualizar_datos():
         if nivel_objetivo <= 0.3:
             tanque_color = "Reds"
             tanque_opacidad = 0.5
-            st.error(f"⚠️ El tanque está bajo ({nivel_objetivo*100:.1f}%)")
+            st.error(f"⚠️ El tanque está bajo ({porcentaje:.1f}%)")
         else:
             tanque_color = "Greys"
             tanque_opacidad = 0.3
@@ -135,16 +139,17 @@ def actualizar_datos():
                 showscale=False, opacity=0.6, colorscale="Blues"
             )
 
-        # Layout con solo eje Z
+        # Layout con eje Z en porcentaje
         fig.update_layout(
             scene=dict(
                 xaxis=dict(visible=False, showgrid=False, zeroline=False),
                 yaxis=dict(visible=False, showgrid=False, zeroline=False),
                 zaxis=dict(
-                    range=[0, ALTURA_ESCALA],
-                    title="Volumen (%)",
+                    range=[0, 100],
+                    title="Nivel (%)",
                     titlefont=dict(size=16, color="black"),
                     tickfont=dict(size=14, color="black"),
+                    tickvals=[0, 20, 40, 60, 80, 100],
                     showgrid=True,
                     gridcolor="darkgrey",
                     linecolor="black",
@@ -160,7 +165,7 @@ def actualizar_datos():
         st.plotly_chart(fig, use_container_width=True)
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
+        c1.metric("Nivel (%)", f"{porcentaje:.1f}%")
         c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
         c3.metric("Altura (m)", f"{altura:.2f}")
         c4.metric("Caudal (L/min)", f"{caudal:.2f}")
