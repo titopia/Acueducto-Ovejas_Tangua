@@ -16,12 +16,15 @@ CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
 
-# 🔄 Auto-refresh
+# 🔄 Auto-refresh compatible
 try:
     from streamlit.runtime.scriptrunner import st_autorefresh
     st_autorefresh(interval=intervalo*1000, key="autorefresh")
-except ImportError:
-    st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
+except Exception:
+    try:
+        st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
+    except Exception:
+        st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
 
 st.title("🌊 Acueducto Ovejas Tangua \n Ingeniería Mecatrónica - Universidad Mariana ")
 st.write("**Autores: Titopia**")
@@ -85,13 +88,16 @@ with tab1:
     else:
         altura, caudal, volumen = 0.0, 0.0, 0.0
 
+    # Nivel normalizado
     nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
     niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
     st.session_state.nivel_anterior = nivel_objetivo
     nivel_suave = niveles[-1]
+
     ALTURA_ESCALA = 100
     altura_agua = nivel_suave * ALTURA_ESCALA
 
+    # Geometría cilindro
     theta = np.linspace(0, 2*np.pi, 50)
     x, y = np.cos(theta), np.sin(theta)
     z_tanque = np.linspace(0, ALTURA_ESCALA, 2)
@@ -101,9 +107,28 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
+    # --- Color dinámico del tanque según nivel ---
+    if nivel_objetivo <= 0.3:  # ≤ 30 %
+        tanque_color = "Reds"
+        tanque_opacidad = 0.5
+        st.error(f"⚠️ El tanque está en nivel crítico ({nivel_objetivo*100:.1f}%)")
+    else:
+        tanque_color = "Greys"
+        tanque_opacidad = 0.3
+
+    # --- Plot ---
     fig = go.Figure()
-    fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="Greys")
-    fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False, opacity=0.6, colorscale="Blues")
+    fig.add_surface(
+        x=x_tanque, y=y_tanque, z=z1,
+        showscale=False, opacity=tanque_opacidad, colorscale=tanque_color
+    )
+
+    if volumen > 0:
+        fig.add_surface(
+            x=x_agua, y=y_agua, z=z3,
+            showscale=False, opacity=0.6, colorscale="Blues"
+        )
+
     fig.update_layout(
         scene=dict(
             xaxis=dict(visible=False),
@@ -115,6 +140,7 @@ with tab1:
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    # --- Indicadores ---
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
