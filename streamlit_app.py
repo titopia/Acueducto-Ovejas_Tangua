@@ -125,9 +125,11 @@ def actualizar_datos():
                     linecolor="white",
                     zeroline=False,
                     backgroundcolor=paper_bg
-                )
+                ),
             ),
             margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor=paper_bg,   # ✅ Aquí sí van
+            plot_bgcolor=paper_bg,     # ✅ Aquí también
             height=500
         )
 
@@ -166,3 +168,4 @@ except Exception:
 
 # Llamada inicial
 actualizar_datos()
+
