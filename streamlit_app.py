@@ -9,9 +9,8 @@ import plotly.express as px
 # 🔹 Configuración general
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
-
-# Intervalo fijo de actualización: 60 segundos
-INTERVALO = 60  
+st.sidebar.markdown("## ⚙️ Configuración")
+intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 60)
 
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
@@ -20,10 +19,10 @@ VOLUMEN_MAX = 80.0   # m³
 # 🔄 Auto-refresh compatible
 try:
     from streamlit.runtime.scriptrunner import st_autorefresh
-    st_autorefresh(interval=INTERVALO*1000, key="autorefresh")
+    st_autorefresh(interval=intervalo*1000, key="autorefresh")
 except Exception:
     try:
-        st.experimental_autorefresh(interval=INTERVALO*1000, key="autorefresh")
+        st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
     except Exception:
         st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
 
@@ -39,7 +38,7 @@ if "nivel_anterior" not in st.session_state:
 # =============================
 # 🔹 Función para obtener datos
 # =============================
-def obtener_datos(resultados=100):
+def obtener_datos(resultados=1000):
     url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
     try:
         r = requests.get(url, timeout=8)
@@ -81,10 +80,10 @@ with col3:
 # 🔹 Pestañas
 # =============================
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🌀 Tanque 3D (Volumen %)",
+    "🌀 Tanque 3D (Volumen %)", 
     "📈 Gráficas históricas",
-    "🌡️ Ambiente (Temp & Humedad)",
-    "📥 Descargas y Displays"
+    "🌡️ Temp & Humedad",
+    "📥 Descargas & Displays"
 ])
 
 # =============================
@@ -179,65 +178,47 @@ with tab2:
         st.warning("No hay datos disponibles para graficar.")
 
 # =============================
-# 🔹 TAB 3: Temperatura y Humedad
+# 🔹 TAB 3: Termómetro y Humedad
 # =============================
 with tab3:
     st.subheader("🌡️ Temperatura y Humedad ambiente")
-    df_ambiente = obtener_datos(resultados=1)
+    df_temp = obtener_datos(resultados=1)
 
-    if not df_ambiente.empty:
-        temp = df_ambiente["temperatura"].iloc[-1]
-        hum = df_ambiente["humedad"].iloc[-1]
+    if not df_temp.empty:
+        temperatura = df_temp["temperatura"].iloc[-1]
+        humedad = df_temp["humedad"].iloc[-1]
 
-        col1, col2 = st.columns(2)
-        with col1:
+        c1, c2 = st.columns(2)
+
+        with c1:
             fig_temp = go.Figure(go.Indicator(
                 mode="gauge+number",
-                value=temp,
+                value=temperatura,
                 title={"text": "Temperatura (°C)"},
-                gauge={
-                    "axis": {"range": [0, 50]},
-                    "bar": {"color": "red"},
-                    "steps": [
-                        {"range": [0, 15], "color": "lightblue"},
-                        {"range": [15, 30], "color": "lightgreen"},
-                        {"range": [30, 50], "color": "orange"}
-                    ]
-                }
+                gauge={"axis": {"range": [0, 50]}, "bar": {"color": "red"}}
             ))
             st.plotly_chart(fig_temp, use_container_width=True)
 
-        with col2:
+        with c2:
             fig_hum = go.Figure(go.Indicator(
                 mode="gauge+number",
-                value=hum,
+                value=humedad,
                 title={"text": "Humedad (%)"},
-                gauge={
-                    "axis": {"range": [0, 100]},
-                    "bar": {"color": "blue"},
-                    "steps": [
-                        {"range": [0, 30], "color": "lightyellow"},
-                        {"range": [30, 70], "color": "lightgreen"},
-                        {"range": [70, 100], "color": "lightblue"}
-                    ]
-                }
+                gauge={"axis": {"range": [0, 100]}, "bar": {"color": "blue"}}
             ))
             st.plotly_chart(fig_hum, use_container_width=True)
-
-        c1, c2 = st.columns(2)
-        c1.metric("🌡️ Temp. actual (°C)", f"{temp:.1f}")
-        c2.metric("💧 Humedad (%)", f"{hum:.1f}")
     else:
-        st.warning("No hay datos de temperatura y humedad disponibles.")
+        st.warning("No hay datos de temperatura ni humedad disponibles.")
 
 # =============================
 # 🔹 TAB 4: Descargas y Displays
 # =============================
 with tab4:
-    st.subheader("📥 Dosificador y Energía + Descarga CSV")
-    df_all = obtener_datos(resultados=200)
+    st.subheader("📥 Dosificador, Energía y Descarga CSV")
+    df_all = obtener_datos(resultados=5000)  # 🔹 Pedimos más datos para poder filtrar
 
     if not df_all.empty:
+        # --- Displays de última lectura ---
         dosificador = df_all["dosificador"].iloc[-1]
         energia = df_all["energia"].iloc[-1]
 
@@ -245,13 +226,39 @@ with tab4:
         c1.metric("⚙️ Dosificador de cloro (golpes)", f"{dosificador:.0f}")
         c2.metric("⚡ Energía AC (kWh)", f"{energia:.2f}")
 
-        # Botón para descargar CSV
-        csv = df_all.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="⬇️ Descargar CSV completo",
-            data=csv,
-            file_name="acueducto_datos.csv",
-            mime="text/csv"
+        # --- Filtro por rango de fechas ---
+        min_fecha = df_all["created_at"].dt.date.min()
+        max_fecha = df_all["created_at"].dt.date.max()
+
+        rango_fechas = st.date_input(
+            "📅 Selecciona un rango de fechas",
+            [min_fecha, max_fecha],
+            min_value=min_fecha,
+            max_value=max_fecha
         )
+
+        if len(rango_fechas) == 2:
+            inicio, fin = rango_fechas
+            df_filtrado = df_all[
+                (df_all["created_at"].dt.date >= inicio) &
+                (df_all["created_at"].dt.date <= fin)
+            ]
+
+            if not df_filtrado.empty:
+                st.success(f"✅ {len(df_filtrado)} registros entre {inicio} y {fin}")
+
+                # Mostrar tabla previa
+                st.dataframe(df_filtrado)
+
+                # Botón para descargar CSV con todos los fields
+                csv = df_filtrado.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label=f"⬇️ Descargar CSV ({inicio} a {fin})",
+                    data=csv,
+                    file_name=f"acueducto_{inicio}_a_{fin}.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.warning("⚠️ No hay registros en el rango seleccionado.")
     else:
         st.warning("No hay datos disponibles para mostrar ni descargar.")
