@@ -113,7 +113,7 @@ with tab1:
         tanque_opacidad = 0.5
         st.error(f"⚠️ El tanque está en nivel crítico ({nivel_objetivo*100:.1f}%)")
     else:
-        tanque_color = "Greys"
+        tanque_color = "Greens"
         tanque_opacidad = 0.3
 
     # --- Plot ---
@@ -161,3 +161,4 @@ with tab2:
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.warning("No hay datos disponibles para graficar.")
+
