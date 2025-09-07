@@ -104,7 +104,7 @@ def actualizar_datos():
         y_agua, z4 = np.meshgrid(y, z_agua)
 
         fig = go.Figure()
-        fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="Greys")
+        fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="White")
         fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False, opacity=0.6, colorscale="Blues")
         fig.update_layout(
             scene=dict(
@@ -150,4 +150,5 @@ except ImportError:
 
 # Llamada inicial a la función de actualización
 actualizar_datos()
+
 
