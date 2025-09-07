@@ -39,7 +39,7 @@ if "nivel_anterior" not in st.session_state:
 # =============================
 # 🔹 Función para obtener datos
 # =============================
-def obtener_datos(resultados=10):
+def obtener_datos(resultados=100):
     url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
     try:
         r = requests.get(url, timeout=8)
@@ -53,6 +53,8 @@ def obtener_datos(resultados=10):
         df["altura"] = pd.to_numeric(df["field1"], errors="coerce")
         df["caudal"] = pd.to_numeric(df["field2"], errors="coerce")
         df["volumen"] = pd.to_numeric(df["field3"], errors="coerce")
+        df["dosificador"] = pd.to_numeric(df["field4"], errors="coerce")
+        df["energia"] = pd.to_numeric(df["field5"], errors="coerce")
         df["humedad"] = pd.to_numeric(df["field6"], errors="coerce")
         df["temperatura"] = pd.to_numeric(df["field7"], errors="coerce")
         return df.dropna()
@@ -78,10 +80,11 @@ with col3:
 # =============================
 # 🔹 Pestañas
 # =============================
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "🌀 Tanque 3D (Volumen %)",
     "📈 Gráficas históricas",
-    "🌡️ Ambiente (Temp & Humedad)"
+    "🌡️ Ambiente (Temp & Humedad)",
+    "📥 Descargas y Displays"
 ])
 
 # =============================
@@ -180,7 +183,6 @@ with tab2:
 # =============================
 with tab3:
     st.subheader("🌡️ Temperatura y Humedad ambiente")
-
     df_ambiente = obtener_datos(resultados=1)
 
     if not df_ambiente.empty:
@@ -188,8 +190,6 @@ with tab3:
         hum = df_ambiente["humedad"].iloc[-1]
 
         col1, col2 = st.columns(2)
-
-        # Termómetro
         with col1:
             fig_temp = go.Figure(go.Indicator(
                 mode="gauge+number",
@@ -205,10 +205,8 @@ with tab3:
                     ]
                 }
             ))
-            fig_temp.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
             st.plotly_chart(fig_temp, use_container_width=True)
 
-        # Higrómetro
         with col2:
             fig_hum = go.Figure(go.Indicator(
                 mode="gauge+number",
@@ -224,12 +222,36 @@ with tab3:
                     ]
                 }
             ))
-            fig_hum.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
             st.plotly_chart(fig_hum, use_container_width=True)
 
-        # Métricas rápidas
         c1, c2 = st.columns(2)
         c1.metric("🌡️ Temp. actual (°C)", f"{temp:.1f}")
         c2.metric("💧 Humedad (%)", f"{hum:.1f}")
     else:
         st.warning("No hay datos de temperatura y humedad disponibles.")
+
+# =============================
+# 🔹 TAB 4: Descargas y Displays
+# =============================
+with tab4:
+    st.subheader("📥 Dosificador y Energía + Descarga CSV")
+    df_all = obtener_datos(resultados=200)
+
+    if not df_all.empty:
+        dosificador = df_all["dosificador"].iloc[-1]
+        energia = df_all["energia"].iloc[-1]
+
+        c1, c2 = st.columns(2)
+        c1.metric("⚙️ Dosificador de cloro (golpes)", f"{dosificador:.0f}")
+        c2.metric("⚡ Energía AC (kWh)", f"{energia:.2f}")
+
+        # Botón para descargar CSV
+        csv = df_all.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="⬇️ Descargar CSV completo",
+            data=csv,
+            file_name="acueducto_datos.csv",
+            mime="text/csv"
+        )
+    else:
+        st.warning("No hay datos disponibles para mostrar ni descargar.")
