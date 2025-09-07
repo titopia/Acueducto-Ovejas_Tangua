@@ -10,9 +10,7 @@ import plotly.express as px
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
 st.sidebar.markdown("## ⚙️ Configuración")
-
 intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 30)
-estilo = st.sidebar.radio("🎨 Estilo visual", ["Realista", "Técnico"])
 
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
@@ -65,18 +63,21 @@ with col3:
 # =============================
 # 🔹 Pestañas
 # =============================
-tab1, tab2 = st.tabs(["🌀 Tanque 3D (Nivel %)", "📈 Gráficas históricas"])
+tab1, tab2 = st.tabs(["🌀 Tanque 3D (Volumen %)", "📈 Gráficas históricas"])
+contenedor_tab1 = tab1.empty()
+contenedor_tab2 = tab2.empty()
 
 # =============================
-# 🔹 Función para actualizar datos y gráficas
+# 🔹 Loop de actualización
 # =============================
 def actualizar_datos():
+    # Últimos datos
     df_ultimo = obtener_datos(resultados=1)
     df_historico = obtener_datos(resultados=10)
 
     # --- Tanque 3D ---
-    with tab1:
-        st.subheader("Tanque en 3D mostrando Nivel (%)")
+    with contenedor_tab1.container():
+        st.subheader("Tanque en 3D mostrando % de Volumen")
 
         if not df_ultimo.empty:
             altura = df_ultimo["altura"].iloc[-1]
@@ -85,11 +86,7 @@ def actualizar_datos():
         else:
             altura, caudal, volumen = 0.0, 0.0, 0.0
 
-        # Nivel en porcentaje
         nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
-        porcentaje = nivel_objetivo * 100
-
-        # Suavizado
         niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
         st.session_state.nivel_anterior = nivel_objetivo
         nivel_suave = niveles[-1]
@@ -105,73 +102,44 @@ def actualizar_datos():
         x_agua, z3 = np.meshgrid(x, z_agua)
         y_agua, z4 = np.meshgrid(y, z_agua)
 
-        # Colores por estilo
-        if estilo == "Realista":
-            bg_color = "skyblue"
-            grid_color = "white"
-            paper_bg = "skyblue"
-        else:  # Técnico
-            bg_color = "white"
-            grid_color = "lightgrey"
-            paper_bg = "white"
-
-        # Color del tanque según nivel
-        if nivel_objetivo <= 0.3:
-            tanque_color = "Reds"
-            tanque_opacidad = 0.5
-            st.error(f"⚠️ El tanque está bajo ({porcentaje:.1f}%)")
-        else:
-            tanque_color = "Greys"
-            tanque_opacidad = 0.3
+        # Fondo oscuro
+        paper_bg = "black"
 
         fig = go.Figure()
+        fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="Greys")
+        fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False, opacity=0.6, colorscale="Blues")
 
-        # Tanque
-        fig.add_surface(
-            x=x_tanque, y=y_tanque, z=z1,
-            showscale=False, opacity=tanque_opacidad, colorscale=tanque_color
-        )
-
-        # Agua
-        if volumen > 0:
-            fig.add_surface(
-                x=x_agua, y=y_agua, z=z3,
-                showscale=False, opacity=0.6, colorscale="Blues"
-            )
-
-        # Layout con eje Z en porcentaje
         fig.update_layout(
             scene=dict(
-                xaxis=dict(visible=False, showgrid=False, zeroline=False),
-                yaxis=dict(visible=False, showgrid=False, zeroline=False),
+                xaxis=dict(visible=False, showgrid=False, zeroline=False, backgroundcolor=paper_bg),
+                yaxis=dict(visible=False, showgrid=False, zeroline=False, backgroundcolor=paper_bg),
                 zaxis=dict(
                     range=[0, 100],
                     title="Nivel (%)",
-                    titlefont=dict(size=16, color="black"),
-                    tickfont=dict(size=14, color="black"),
+                    titlefont=dict(size=16, color="white"),
+                    tickfont=dict(size=14, color="white"),
                     tickvals=[0, 20, 40, 60, 80, 100],
                     showgrid=True,
                     gridcolor="darkgrey",
-                    linecolor="black",
+                    linecolor="white",
                     zeroline=False,
+                    backgroundcolor=paper_bg
                 )
             ),
             margin=dict(l=0, r=0, t=0, b=0),
             height=500,
-            paper_bgcolor=paper_bg,
-            plot_bgcolor=paper_bg
+            paper_bgcolor=paper_bg
         )
-
         st.plotly_chart(fig, use_container_width=True)
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Nivel (%)", f"{porcentaje:.1f}%")
+        c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
         c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
         c3.metric("Altura (m)", f"{altura:.2f}")
         c4.metric("Caudal (L/min)", f"{caudal:.2f}")
 
     # --- Gráficas históricas ---
-    with tab2:
+    with contenedor_tab2.container():
         st.subheader("Últimos 10 valores")
         if not df_historico.empty:
             fig1 = px.line(df_historico, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
@@ -188,13 +156,9 @@ def actualizar_datos():
 # 🔹 Auto-refresh
 # =============================
 try:
-    from streamlit.runtime.scriptrunner import st_autorefresh
-    st_autorefresh(interval=intervalo*1000, key="autorefresh")
+    st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
 except Exception:
-    try:
-        st.experimental_autorefresh(interval=intervalo*1000, key="autorefresh")
-    except Exception:
-        st.info("⚠️ Tu versión de Streamlit no soporta autorefresh automático.")
+    st.info(f"La página se actualizará manualmente cada {intervalo} segundos si tu Streamlit no soporta autorefresh.")
 
 # Llamada inicial
 actualizar_datos()
