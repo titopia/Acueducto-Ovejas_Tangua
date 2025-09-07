@@ -109,6 +109,7 @@ def actualizar_datos():
         fig.add_surface(x=x_tanque, y=y_tanque, z=z1, showscale=False, opacity=0.3, colorscale="Greys")
         fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False, opacity=0.6, colorscale="Blues")
 
+        # Configuración de ejes y fondo
         fig.update_layout(
             scene=dict(
                 xaxis=dict(visible=False, showgrid=False, zeroline=False, backgroundcolor=paper_bg),
@@ -127,9 +128,12 @@ def actualizar_datos():
                 )
             ),
             margin=dict(l=0, r=0, t=0, b=0),
-            height=500,
-            paper_bgcolor=paper_bg
+            height=500
         )
+
+        # Fondo global del gráfico
+        fig.update_layout(paper_bgcolor=paper_bg)
+
         st.plotly_chart(fig, use_container_width=True)
 
         c1, c2, c3, c4 = st.columns(4)
