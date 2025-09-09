@@ -15,8 +15,8 @@ TELEGRAM_CHAT_ID = "8433361405"  # tu chat ID
 # =============================
 # ⚙️ Configuración
 # =============================
-CHANNEL_ID = "2569089"
-READ_API_KEY = "DLU1YX0VYQ2R5C65"
+CHANNEL_ID = "3031360"
+READ_API_KEY = "NLEFO3SRH1H6550W"
 st.set_page_config(page_title="Acueducto Tangua", layout="wide")
 
 # =============================
@@ -181,3 +181,4 @@ if (datetime.now() - st.session_state["last_data_time"]) > timedelta(minutes=5):
         enviar_alerta("🚨 ALERTA: No se reciben datos en los últimos 5 minutos del Acueducto Tangua.")
         st.session_state["alert_sent"] = True
     st.error("⚠️ No se reciben datos desde hace más de 5 minutos.")
+
