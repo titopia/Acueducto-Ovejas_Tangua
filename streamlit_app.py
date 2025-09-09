@@ -9,6 +9,7 @@ from datetime import datetime
 # =============================
 # 🔹 Configuración general
 # =============================
+
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
@@ -19,7 +20,7 @@ page_bg = """
 }
 </style>
 """
-st.set_page_config(page_title="Tanque 3D", layout="wide")
+st.markdown(page_bg, unsafe_allow_html=True)
 st.sidebar.markdown("## ⚙️ Configuración")
 intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 60)
 
@@ -274,5 +275,6 @@ with tab4:
             )
         else:
             st.warning("⚠️ No hay registros en el rango seleccionado.")
+
 
 
