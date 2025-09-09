@@ -136,7 +136,7 @@ with tab1:
         tanque_opacidad = 0.5
         st.error(f"⚠️ El tanque está en nivel crítico ({nivel_objetivo*100:.1f}%)")
     else:
-        tanque_color = "Greys"
+        tanque_color = "Greens"
         tanque_opacidad = 0.3
 
     # --- Plot ---
@@ -264,3 +264,4 @@ with tab4:
             )
         else:
             st.warning("⚠️ No hay registros en el rango seleccionado.")
+
