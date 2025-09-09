@@ -13,7 +13,7 @@ from datetime import datetime
 page_bg = """
 <style>
 [data-testid="stAppViewContainer"] {
-    background-color: #6495ED; /* Azul muy claro */
+    background-color: #696969; /* Azul muy claro */
 }
 [data-testid="stHeader"] {
     background-color: #004080; /* Azul oscuro en encabezado */
@@ -275,6 +275,7 @@ with tab4:
             )
         else:
             st.warning("⚠️ No hay registros en el rango seleccionado.")
+
 
 
 
