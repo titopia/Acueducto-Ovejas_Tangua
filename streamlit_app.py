@@ -4,19 +4,26 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import pytz
+from datetime import datetime, timedelta
 
 # =============================
 # 🔹 Configuración general
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
 st.sidebar.markdown("## ⚙️ Configuración")
-intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 60)
+intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 120, 30)
 
 CHANNEL_ID = "3031360"
 READ_API_KEY = st.secrets.get("READ_API_KEY", "")
 VOLUMEN_MAX = 80.0   # m³
+TIEMPO_MAX_SIN_DATOS = 300  # 5 minutos
 
-# 🔄 Auto-refresh compatible
+# 🔹 Configuración Telegram
+TELEGRAM_BOT_TOKEN = st.secrets.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = st.secrets.get("TELEGRAM_CHAT_ID", "")
+
+# 🔄 Auto-refresh
 try:
     from streamlit.runtime.scriptrunner import st_autorefresh
     st_autorefresh(interval=intervalo*1000, key="autorefresh")
@@ -34,11 +41,13 @@ st.write("**Autores: Titopia**")
 # =============================
 if "nivel_anterior" not in st.session_state:
     st.session_state.nivel_anterior = 0.0
+if "ultima_alarma" not in st.session_state:
+    st.session_state.ultima_alarma = None
 
 # =============================
 # 🔹 Función para obtener datos
 # =============================
-def obtener_datos(resultados=1000):
+def obtener_datos(resultados=10):
     url = f"https://api.thingspeak.com/channels/{CHANNEL_ID}/feeds.json?api_key={READ_API_KEY}&results={resultados}"
     try:
         r = requests.get(url, timeout=8)
@@ -52,17 +61,52 @@ def obtener_datos(resultados=1000):
         df["altura"] = pd.to_numeric(df["field1"], errors="coerce")
         df["caudal"] = pd.to_numeric(df["field2"], errors="coerce")
         df["volumen"] = pd.to_numeric(df["field3"], errors="coerce")
-        df["dosificador"] = pd.to_numeric(df["field4"], errors="coerce")
-        df["energia"] = pd.to_numeric(df["field5"], errors="coerce")
         df["humedad"] = pd.to_numeric(df["field6"], errors="coerce")
         df["temperatura"] = pd.to_numeric(df["field7"], errors="coerce")
+        df["cloro"] = pd.to_numeric(df["field4"], errors="coerce")
+        df["energia"] = pd.to_numeric(df["field5"], errors="coerce")
         return df.dropna()
     except Exception as e:
         st.error(f"Error obteniendo datos: {e}")
         return pd.DataFrame()
 
 # =============================
-# 🔹 Encabezado con logos
+# 🔹 Notificación a Telegram
+# =============================
+def enviar_telegram(mensaje: str):
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje}
+        try:
+            requests.post(url, data=payload, timeout=5)
+        except Exception as e:
+            st.error(f"Error enviando alerta a Telegram: {e}")
+
+# =============================
+# 🔹 Verificación de datos recientes
+# =============================
+def verificar_datos_recientes(df):
+    if df.empty:
+        return "❌ Sin datos", "red"
+
+    ultima_fecha = df["created_at"].max()
+    ahora = datetime.utcnow().replace(tzinfo=pytz.UTC)
+    delta = (ahora - ultima_fecha).total_seconds()
+
+    if delta > TIEMPO_MAX_SIN_DATOS:
+        # Enviar alerta solo si no se ha enviado antes
+        if not st.session_state.ultima_alarma:
+            mensaje = f"🚨 ALERTA: No se reciben datos del acueducto desde hace más de 5 minutos.\nÚltima actualización: {ultima_fecha}"
+            enviar_telegram(mensaje)
+            st.session_state.ultima_alarma = datetime.utcnow()
+        return "⚠️ Sin actualización (>5 min)", "orange"
+
+    # Resetear alarma si vuelven los datos
+    st.session_state.ultima_alarma = None
+    return "✅ Conectado", "green"
+
+# =============================
+# 🔹 Encabezado con logos y estado
 # =============================
 col1, col2, col3 = st.columns([1, 3, 1])
 with col1:
@@ -76,189 +120,35 @@ with col2:
 with col3:
     st.image("grupo_social.png", width=200)
 
-# =============================
-# 🔹 Pestañas
-# =============================
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🌀 Tanque 3D (Volumen %)", 
-    "📈 Gráficas históricas",
-    "🌡️ Temp & Humedad",
-    "📥 Descargas & Displays"
-])
+# Estado general
+df_estado = obtener_datos(resultados=1)
+estado, color = verificar_datos_recientes(df_estado)
 
-# =============================
-# 🔹 TAB 1: Tanque 3D
-# =============================
-with tab1:
-    st.subheader("Tanque en 3D mostrando % de Volumen")
-    df_ultimo = obtener_datos(resultados=1)
-
-    if not df_ultimo.empty:
-        altura = df_ultimo["altura"].iloc[-1]
-        caudal = df_ultimo["caudal"].iloc[-1]
-        volumen = df_ultimo["volumen"].iloc[-1]
-    else:
-        altura, caudal, volumen = 0.0, 0.0, 0.0
-
-    # Nivel normalizado
-    nivel_objetivo = max(0.0, min(1.0, volumen / VOLUMEN_MAX))
-    niveles = np.linspace(st.session_state.nivel_anterior, nivel_objetivo, 20)
-    st.session_state.nivel_anterior = nivel_objetivo
-    nivel_suave = niveles[-1]
-
-    ALTURA_ESCALA = 100
-    altura_agua = nivel_suave * ALTURA_ESCALA
-
-    # Geometría cilindro
-    theta = np.linspace(0, 2*np.pi, 50)
-    x, y = np.cos(theta), np.sin(theta)
-    z_tanque = np.linspace(0, ALTURA_ESCALA, 2)
-    x_tanque, z1 = np.meshgrid(x, z_tanque)
-    y_tanque, z2 = np.meshgrid(y, z_tanque)
-    z_agua = np.linspace(0, altura_agua, 2)
-    x_agua, z3 = np.meshgrid(x, z_agua)
-    y_agua, z4 = np.meshgrid(y, z_agua)
-
-    # --- Color dinámico del tanque según nivel ---
-    if nivel_objetivo <= 0.3:  # ≤ 30 %
-        tanque_color = "Reds"
-        tanque_opacidad = 0.5
-        st.error(f"⚠️ El tanque está en nivel crítico ({nivel_objetivo*100:.1f}%)")
-    else:
-        tanque_color = "Greys"
-        tanque_opacidad = 0.3
-
-    # --- Plot ---
-    fig = go.Figure()
-    fig.add_surface(
-        x=x_tanque, y=y_tanque, z=z1,
-        showscale=False, opacity=tanque_opacidad, colorscale=tanque_color
+# Zona horaria Colombia
+zona_colombia = pytz.timezone("America/Bogota")
+if not df_estado.empty:
+    ultima_fecha = (
+        df_estado["created_at"].max()
+        .tz_localize("UTC")
+        .astimezone(zona_colombia)
+        .strftime("%Y-%m-%d %H:%M:%S")
     )
+else:
+    ultima_fecha = "Sin datos"
 
-    if volumen > 0:
-        fig.add_surface(
-            x=x_agua, y=y_agua, z=z3,
-            showscale=False, opacity=0.6, colorscale="Blues"
-        )
-
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=500
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # --- Indicadores ---
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Nivel (%)", f"{nivel_objetivo*100:.1f}%")
-    c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
-    c3.metric("Altura (m)", f"{altura:.2f}")
-    c4.metric("Caudal (L/min)", f"{caudal:.2f}")
+st.markdown(
+    f"""
+    <h3 style='text-align:center; color:{color};'>
+        📡 Estado del sistema: {estado}
+    </h3>
+    <p style='text-align:center; font-size:16px; color:gray;'>
+        ⏱️ Última actualización: {ultima_fecha} (hora Colombia)
+    </p>
+    """,
+    unsafe_allow_html=True
+)
 
 # =============================
-# 🔹 TAB 2: Gráficas históricas
+# 🔹 Pestañas (tanque, gráficas, clima, descarga)
 # =============================
-with tab2:
-    st.subheader("Últimos 10 valores")
-    df_historico = obtener_datos(resultados=10)
-
-    if not df_historico.empty:
-        fig1 = px.line(df_historico, x="created_at", y="volumen", markers=True, title="Volumen (m³)")
-        fig2 = px.line(df_historico, x="created_at", y="altura", markers=True, title="Altura (m)")
-        fig3 = px.line(df_historico, x="created_at", y="caudal", markers=True, title="Caudal (L/min)")
-
-        st.plotly_chart(fig1, use_container_width=True)
-        st.plotly_chart(fig2, use_container_width=True)
-        st.plotly_chart(fig3, use_container_width=True)
-    else:
-        st.warning("No hay datos disponibles para graficar.")
-
-# =============================
-# 🔹 TAB 3: Termómetro y Humedad
-# =============================
-with tab3:
-    st.subheader("🌡️ Temperatura y Humedad ambiente")
-    df_temp = obtener_datos(resultados=1)
-
-    if not df_temp.empty:
-        temperatura = df_temp["temperatura"].iloc[-1]
-        humedad = df_temp["humedad"].iloc[-1]
-
-        c1, c2 = st.columns(2)
-
-        with c1:
-            fig_temp = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=temperatura,
-                title={"text": "Temperatura (°C)"},
-                gauge={"axis": {"range": [0, 50]}, "bar": {"color": "red"}}
-            ))
-            st.plotly_chart(fig_temp, use_container_width=True)
-
-        with c2:
-            fig_hum = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=humedad,
-                title={"text": "Humedad (%)"},
-                gauge={"axis": {"range": [0, 100]}, "bar": {"color": "blue"}}
-            ))
-            st.plotly_chart(fig_hum, use_container_width=True)
-    else:
-        st.warning("No hay datos de temperatura ni humedad disponibles.")
-
-# =============================
-# 🔹 TAB 4: Descargas y Displays
-# =============================
-with tab4:
-    st.subheader("📥 Dosificador, Energía y Descarga CSV")
-    df_all = obtener_datos(resultados=5000)  # 🔹 Pedimos más datos para poder filtrar
-
-    if not df_all.empty:
-        # --- Displays de última lectura ---
-        dosificador = df_all["dosificador"].iloc[-1]
-        energia = df_all["energia"].iloc[-1]
-
-        c1, c2 = st.columns(2)
-        c1.metric("⚙️ Dosificador de cloro (golpes)", f"{dosificador:.0f}")
-        c2.metric("⚡ Energía AC (kWh)", f"{energia:.2f}")
-
-        # --- Filtro por rango de fechas ---
-        min_fecha = df_all["created_at"].dt.date.min()
-        max_fecha = df_all["created_at"].dt.date.max()
-
-        rango_fechas = st.date_input(
-            "📅 Selecciona un rango de fechas",
-            [min_fecha, max_fecha],
-            min_value=min_fecha,
-            max_value=max_fecha
-        )
-
-        if len(rango_fechas) == 2:
-            inicio, fin = rango_fechas
-            df_filtrado = df_all[
-                (df_all["created_at"].dt.date >= inicio) &
-                (df_all["created_at"].dt.date <= fin)
-            ]
-
-            if not df_filtrado.empty:
-                st.success(f"✅ {len(df_filtrado)} registros entre {inicio} y {fin}")
-
-                # Mostrar tabla previa
-                st.dataframe(df_filtrado)
-
-                # Botón para descargar CSV con todos los fields
-                csv = df_filtrado.to_csv(index=False).encode("utf-8")
-                st.download_button(
-                    label=f"⬇️ Descargar CSV ({inicio} a {fin})",
-                    data=csv,
-                    file_name=f"acueducto_{inicio}_a_{fin}.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.warning("⚠️ No hay registros en el rango seleccionado.")
-    else:
-        st.warning("No hay datos disponibles para mostrar ni descargar.")
+# (Aquí mantienes el mismo contenido que ya tienes en las pestañas anteriores)
