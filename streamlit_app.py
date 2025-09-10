@@ -145,7 +145,7 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
-    tanque_color = "Reds" if nivel <= 0.3 else "reds"
+    tanque_color = "Reds" if nivel <= 0.3 else "Greens"
     tanque_opacidad = 0.5 if nivel <= 0.3 else 0.3
 
     fig = go.Figure()
@@ -155,6 +155,7 @@ with tab1:
         fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False,
                         opacity=0.6, colorscale="Blues")
     fig.update_layout(
+        plot_bgcolor='rgb(230, 230, 230)',
         scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False),
                    zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")),
         margin=dict(l=0, r=0, t=0, b=0), height=480
@@ -242,6 +243,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
