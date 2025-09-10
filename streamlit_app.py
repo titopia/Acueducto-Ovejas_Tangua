@@ -156,6 +156,7 @@ with tab1:
                         opacity=0.6, colorscale="Blues")
     fig.update_layout(
         plot_bgcolor='rgb(230, 230, 230)',
+        paper_bgcolor='rgb(255, 255, 255)',
         scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False),
                    zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")),
         margin=dict(l=0, r=0, t=0, b=0), height=480
@@ -243,6 +244,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
