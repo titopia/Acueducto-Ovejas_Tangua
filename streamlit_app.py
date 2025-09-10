@@ -36,7 +36,7 @@ components.html(
 
 # Botón manual por si el JS queda bloqueado
 if st.sidebar.button("🔄 Actualizar ahora"):
-    st.experimental_rerun()
+    st.rerun()
 
 # -----------------------------
 # Función para obtener datos (soporta start/end o results)
@@ -244,6 +244,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
