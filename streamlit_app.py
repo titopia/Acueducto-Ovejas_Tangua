@@ -93,7 +93,8 @@ with col1:
 with col2:
     st.markdown(
         "<h2 style='text-align:center; color:#004080; margin:0;'>🌊 Monitoreo Acueducto Tambor los Ajos</h2>"
-        "<p style='text-align:center; margin:0;'>Ingeniería Mecatrónica - Universidad Mariana</p>",
+        "<p style='text-align:center; margin:0;'>Ingeniería Mecatrónica - Universidad Mariana</p>"
+        "<p style='text-align:center; margin:0;'>Autores: Titopia</p>",
         unsafe_allow_html=True,
     )
 with col3:
@@ -241,5 +242,6 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
