@@ -9,8 +9,22 @@ import plotly.express as px
 # 🔹 Configuración general
 # =============================
 st.set_page_config(page_title="Tanque 3D", layout="wide")
+intervalo = 60  # ⏱️ tiempo en segundos para refrescar (puedes cambiarlo en sidebar)
 
 st.sidebar.markdown("## ⚙️ Configuración")
+intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 10, 300, 60)
+
+st.markdown(
+    f"""
+    <script>
+    function reload() {{
+        window.location.reload();
+    }}
+    setTimeout(reload, {intervalo*1000});
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 intervalo = st.sidebar.slider("⏱ Intervalo de actualización (segundos)", 60, 300, 120)
 
 CHANNEL_ID = "3031360"
@@ -264,4 +278,5 @@ with tab4:
                 st.warning("⚠️ No hay registros en el rango seleccionado.")
     else:
         st.warning("⚠️ No hay datos disponibles para mostrar ni descargar.")
+
 
