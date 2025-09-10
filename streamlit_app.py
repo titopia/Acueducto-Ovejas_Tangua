@@ -155,7 +155,7 @@ with tab1:
         fig.add_surface(x=x_agua, y=y_agua, z=z3, showscale=False,
                         opacity=0.6, colorscale="Blues")
     fig.update_layout(
-        plot_bgcolor='rgb(230, 230, 230)',
+        plot_bgcolor='rgb(0, 0, 0)',
         paper_bgcolor='rgb(255, 255, 255)',
         scene=dict(xaxis=dict(visible=False), yaxis=dict(visible=False),
                    zaxis=dict(range=[0, ALTURA_ESCALA], title="Volumen (%)")),
@@ -244,6 +244,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
