@@ -18,9 +18,39 @@ st.markdown(
     """
     <style>
         .stApp {
-            background-color: #2c3033;
+            background-color: #f0f8ff;
+        }
+        .encabezado {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .encabezado img {
+            max-width: 140px;
+        }
+        .titulo-proyecto {
+            color: #004080;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .subtitulo {
+            font-size: 18px;
+            color: #444;
         }
     </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# =========================
+# 🏫 Encabezado institucional
+# =========================
+st.markdown(
+    """
+    <div class="encabezado">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3f/Logo_Unimar.png" alt="Logo Universidad Mariana">
+        <div class="titulo-proyecto">💧 Sistema de Monitoreo Acueducto Ovejas - Tangua</div>
+        <div class="subtitulo">Universidad Mariana | Programa de Ingeniería Mecatrónica</div>
+    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -133,24 +163,5 @@ with tab3:
 with tab4:
     st.header("Descargar datos")
 
-    fecha_inicio = st.date_input("📅 Fecha inicio")
-    fecha_fin = st.date_input("📅 Fecha fin")
-
-    if st.button("Descargar CSV"):
-        if fecha_inicio and fecha_fin:
-            inicio = f"{fecha_inicio} 00:00:00"
-            fin = f"{fecha_fin} 23:59:59"
-            df = obtener_datos(start=inicio, end=fin, resultados=8000)
-            if not df.empty:
-                csv = df.to_csv(index=False).encode("utf-8")
-                st.download_button("⬇️ Descargar archivo CSV", csv, "datos.csv", "text/csv")
-            else:
-                st.warning("⚠️ No hay datos en ese rango de fechas.")
-
-# =========================
-# 🔄 Auto refresh
-# =========================
-time.sleep(60)
-st.rerun()
-
+    fecha_inicio = st.date_input
 
