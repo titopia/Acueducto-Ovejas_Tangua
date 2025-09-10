@@ -18,7 +18,7 @@ st.markdown(
     """
     <style>
         .stApp {
-            background-color: #485c6e;
+            background-color: #2c3033;
         }
     </style>
     """,
@@ -152,4 +152,5 @@ with tab4:
 # =========================
 time.sleep(60)
 st.rerun()
+
 
