@@ -144,7 +144,7 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
-    tanque_color = "Reds" if nivel <= 0.3 else "Whites"
+    tanque_color = "Reds" if nivel <= 0.3 else "reds"
     tanque_opacidad = 0.5 if nivel <= 0.3 else 0.3
 
     fig = go.Figure()
@@ -241,4 +241,5 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
