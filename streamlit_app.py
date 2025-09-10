@@ -92,7 +92,7 @@ with col1:
     st.image("umariana.png", width=160)
 with col2:
     st.markdown(
-        "<h2 style='text-align:center; color:#004080; margin:0;'>🌊 Monitoreo Acueducto Tambor - Ovejas</h2>"
+        "<h2 style='text-align:center; color:#004080; margin:0;'>🌊 Monitoreo Acueducto Tambor los Ajos</h2>"
         "<p style='text-align:center; margin:0;'>Ingeniería Mecatrónica - Universidad Mariana</p>",
         unsafe_allow_html=True,
     )
@@ -144,7 +144,7 @@ with tab1:
     x_agua, z3 = np.meshgrid(x, z_agua)
     y_agua, z4 = np.meshgrid(y, z_agua)
 
-    tanque_color = "Reds" if nivel <= 0.3 else "Greys"
+    tanque_color = "Reds" if nivel <= 0.3 else "Whites"
     tanque_opacidad = 0.5 if nivel <= 0.3 else 0.3
 
     fig = go.Figure()
@@ -241,3 +241,4 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
