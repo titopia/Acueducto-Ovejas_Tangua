@@ -18,7 +18,7 @@ st.markdown(
     """
     <style>
         .stApp {
-            background-color: #f0f8ff;
+            background-color: #2c3033;
         }
         .encabezado {
             text-align: center;
@@ -164,4 +164,5 @@ with tab4:
     st.header("Descargar datos")
 
     fecha_inicio = st.date_input
+
 
