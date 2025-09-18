@@ -169,7 +169,7 @@ with tab1:
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
     c3.metric("Altura (m)", f"{altura:.2f}")
     c4.metric("Caudal (L/min)", f"{caudal:.2f}")
-    c5.metric("Golpes ", f"{golpes:.2f}")
+    c5.metric("Strokes ", f"{golpes:.2f}")
 
     st.caption(f"Último dato recibido (hora Colombia): {ts_str}")
 
@@ -246,6 +246,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
