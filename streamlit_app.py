@@ -92,7 +92,7 @@ with col1:
     st.image("umariana.png", width=160)
 with col2:
     st.markdown(
-        "<h2 style='text-align:center; color:#004080; margin:0;'>🌊 Monitoreo Acueducto Tambor los Ajos</h2>"
+        "<h2 style='text-align:center; color:#004080; margin:0;'>Monitoreo Acueducto Tambor los Ajos</h2>"
         "<p style='text-align:center; margin:0;'>Ingeniería Mecatrónica - Universidad Mariana</p>"
         "<p style='text-align:center; margin:0;'>Autores: Titopia</p>",
         unsafe_allow_html=True,
@@ -106,10 +106,10 @@ st.write("")  # separación ligera
 # Pestañas
 # -----------------------------
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🌀 Tanque 3D (Volumen %)",
-    "📈 Gráficas históricas",
-    "🌡️ Temp & Humedad",
-    "📥 Descargas"
+    "Tanque 3D (Volumen %)",
+    "Gráficas históricas",
+    "🌡Temp & Humedad",
+    " Descargas"
 ])
 
 # -----------------------------
@@ -123,6 +123,7 @@ with tab1:
         volumen = float(df_last["field3"].iloc[-1]) if "field3" in df_last else 0.0
         altura = float(df_last["field1"].iloc[-1]) if "field1" in df_last else 0.0
         caudal = float(df_last["field2"].iloc[-1]) if "field2" in df_last else 0.0
+        golpes = float(df_last["field4"].iloc[-1]) if "field4" in df_last else 0.0
         ts = df_last["created_at"].iloc[-1]
         ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
     else:
@@ -168,6 +169,7 @@ with tab1:
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
     c3.metric("Altura (m)", f"{altura:.2f}")
     c4.metric("Caudal (L/min)", f"{caudal:.2f}")
+    c5.metric("Golpes ", f"{golpes:.2f}")
 
     st.caption(f"Último dato recibido (hora Colombia): {ts_str}")
 
@@ -244,6 +246,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
