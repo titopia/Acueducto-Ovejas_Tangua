@@ -164,7 +164,7 @@ with tab1:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(5)
     c1.metric("Nivel (%)", f"{nivel_pct:.1f}%")
     c2.metric("Volumen (m³)", f"{volumen:.2f} / {VOLUMEN_MAX:.0f}")
     c3.metric("Altura (m)", f"{altura:.2f}")
@@ -246,6 +246,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
