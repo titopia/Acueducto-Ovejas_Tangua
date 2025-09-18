@@ -122,7 +122,7 @@ with tab1:
         # leer campos (field3 = volumen (m³), field1 = altura (m), field2 = caudal)
         volumen = float(df_last["field3"].iloc[-1]) if "field3" in df_last else 0.0
         altura = float(df_last["field1"].iloc[-1]) if "field1" in df_last else 0.0
-        caudal = float(df_last["field2"].iloc[-1]) if "field2" in df_last else 0.0
+        caudal=0 #caudal = float(df_last["field2"].iloc[-1]) if "field2" in df_last else 0.0
         golpes = float(df_last["field4"].iloc[-1]) if "field4" in df_last else 0.0
         ts = df_last["created_at"].iloc[-1]
         ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
@@ -246,6 +246,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
