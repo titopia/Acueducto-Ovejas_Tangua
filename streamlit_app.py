@@ -22,7 +22,7 @@ intervalo = st.sidebar.slider("Intervalo de actualización (segundos)", 30, 600,
 
 # -----------------------------
 # Auto-refresh inyectado con components.html
-# (algunas plataformas bloquean scripts; si no funciona, usa el botón '🔄 Actualizar ahora')
+# (algunas plataformas bloquean scripts; si no funciona, usa el botón ' Actualizar ahora')
 # -----------------------------
 components.html(
     f"""
@@ -35,7 +35,7 @@ components.html(
 )
 
 # Botón manual por si el JS queda bloqueado
-if st.sidebar.button("🔄 Actualizar ahora"):
+if st.sidebar.button(" Actualizar ahora"):
     st.rerun()
 
 # -----------------------------
@@ -246,6 +246,7 @@ with tab4:
 # -----------------------------
 # Nota: si el script inyectado no recarga (CMS/hosting lo bloquea), usa el botón '🔄 Actualizar ahora'
 # -----------------------------
+
 
 
 
